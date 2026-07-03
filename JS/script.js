@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", function () {
        LOADING SCREEN
     ========================== */
     const loader = document.createElement("div");
-
     loader.innerHTML = "PT Energi Gas Medan";
     loader.style.position = "fixed";
     loader.style.top = "0";
@@ -18,7 +17,6 @@ document.addEventListener("DOMContentLoaded", function () {
     loader.style.alignItems = "center";
     loader.style.fontSize = "1.5rem";
     loader.style.zIndex = "99999";
-
     document.body.appendChild(loader);
 
     window.addEventListener("load", () => {
@@ -29,12 +27,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 800);
     });
 
-
     /* =========================
        SCROLL PROGRESS BAR
     ========================== */
     const progressBar = document.createElement("div");
-
     progressBar.style.position = "fixed";
     progressBar.style.top = "0";
     progressBar.style.left = "0";
@@ -42,125 +38,235 @@ document.addEventListener("DOMContentLoaded", function () {
     progressBar.style.background = "#f59e0b";
     progressBar.style.width = "0%";
     progressBar.style.zIndex = "9999";
-
     document.body.appendChild(progressBar);
 
     window.addEventListener("scroll", () => {
         const scrollTop = document.documentElement.scrollTop;
         const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-
-        const scrolled = (scrollTop / scrollHeight) * 100;
+        const scrolled = scrollHeight ? (scrollTop / scrollHeight) * 100 : 0;
         progressBar.style.width = scrolled + "%";
     });
-
 
     /* =========================
        DARK MODE TOGGLE
     ========================== */
     const darkBtn = document.createElement("button");
-
     darkBtn.innerText = "🌙 Dark Mode";
     darkBtn.style.position = "fixed";
-    darkBtn.style.bottom = "80px";
+    darkBtn.style.bottom = "20px";
     darkBtn.style.right = "20px";
     darkBtn.style.padding = "10px 12px";
     darkBtn.style.border = "none";
     darkBtn.style.borderRadius = "20px";
     darkBtn.style.cursor = "pointer";
     darkBtn.style.zIndex = "9999";
-
+    darkBtn.style.background = "#1f2937";
+    darkBtn.style.color = "#fff";
     document.body.appendChild(darkBtn);
 
     let dark = false;
-
     darkBtn.addEventListener("click", () => {
         dark = !dark;
-
         if (dark) {
             document.body.style.background = "#0f172a";
             document.body.style.color = "white";
             darkBtn.innerText = "☀️ Light Mode";
+            darkBtn.style.background = "#f5f7fb";
+            darkBtn.style.color = "#1f2937";
         } else {
             document.body.style.background = "#f5f7fb";
             document.body.style.color = "#1f2937";
             darkBtn.innerText = "🌙 Dark Mode";
+            darkBtn.style.background = "#1f2937";
+            darkBtn.style.color = "#fff";
         }
     });
-
 
     /* =========================
-       BACK TO TOP BUTTON
-    ========================== */
-    const topBtn = document.createElement("button");
+       LAMAR KERJA (POPUP + TABLE)
+    ========================= */
+    const applyBtns = document.querySelectorAll(".apply-btn");
+    if (!applyBtns.length) return;
 
-    topBtn.innerText = "↑ Top";
-    topBtn.style.position = "fixed";
-    topBtn.style.bottom = "140px";
-    topBtn.style.right = "20px";
-    topBtn.style.padding = "10px 12px";
-    topBtn.style.borderRadius = "20px";
-    topBtn.style.border = "none";
-    topBtn.style.cursor = "pointer";
-    topBtn.style.zIndex = "9999";
-    topBtn.style.display = "none";
+    const STORAGE_KEY = "applySubmissions";
 
-    document.body.appendChild(topBtn);
+    let overlayEl = null;
+    let modalEl = null;
 
-    window.addEventListener("scroll", () => {
-        if (window.scrollY > 300) {
-            topBtn.style.display = "block";
-        } else {
-            topBtn.style.display = "none";
-        }
-    });
+    const modalHtml = `
+        <div id="applyModalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:none;"></div>
+        <div id="applyModal" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(680px,92vw);background:#fff;color:#111827;z-index:10001;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;display:none;">
+            <div style="background:#0b1220;color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-weight:800;font-size:1.1rem;">Form Lamaran Pekerjaan</div>
+                    <div style="font-size:13px;opacity:.9;margin-top:2px;" id="applyPositionLabel"></div>
+                </div>
+                <button type="button" id="applyModalClose" style="background:transparent;border:0;color:#fff;font-size:24px;cursor:pointer;line-height:1;">&times;</button>
+            </div>
 
-    topBtn.addEventListener("click", () => {
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-    });
+            <form id="applyForm" style="padding:20px;display:flex;flex-direction:column;gap:12px;">
+                <input type="hidden" id="applyPositionCode" />
 
-});
+                <div>
+                    <label style="font-weight:bold;font-size:14px;">Nama Lengkap</label>
+                    <input id="applyFullName" type="text" placeholder="Masukkan nama..." required style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;margin-top:5px;box-sizing:border-box;" />
+                </div>
 
-/* =========================
-       FORM KONTAK INTERAKTIF
-    ========================== */
-    const contactForm = document.getElementById("contactForm");
-    if(contactForm) {
-        contactForm.addEventListener("submit", function(e) {
-            e.preventDefault();
-            // Logika simulasi kirim
-            alert("Pesan lu udah terkirim, bro! Tim kami bakal segera merespons.");
-            contactForm.reset();
+                <div>
+                    <label style="font-weight:bold;font-size:14px;">Email</label>
+                    <input id="applyEmail" type="email" placeholder="contoh@email.com" required style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;margin-top:5px;box-sizing:border-box;" />
+                </div>
+
+                <div>
+                    <label style="font-weight:bold;font-size:14px;">Posisi Dilamar</label>
+                    <input id="applyPositionName" type="text" readonly style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;background:#f3f4f6;color:#6b7280;margin-top:5px;box-sizing:border-box;" />
+                </div>
+
+                <button type="submit" style="background:#f59e0b;border:0;color:#fff;padding:12px 15px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:15px;margin-top:10px;">Submit Lamaran</button>
+            </form>
+
+            <div style="padding:15px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <div style="font-weight:bold;font-size:15px;">Daftar Pelamar (Lokal)</div>
+                    <button type="button" id="applyClearBtn" style="background:#ef4444;border:0;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;">Clear Data</button>
+                </div>
+                <div style="overflow-x:auto;max-height:200px;border:1px solid #e5e7eb;border-radius:6px;">
+                    <div id="applyTableWrap"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    function escapeHtml(s) {
+        return String(s ?? "").replace(/[&<>"']/g, (ch) => {
+            switch (ch) {
+                case "&": return "&amp;";
+                case "<": return "&lt;";
+                case ">": return "&gt;";
+                case '"': return "&quot;";
+                case "'": return "&#39;";
+                default: return ch;
+            }
         });
     }
 
-    /* =========================
-       TOMBOL LAMAR KARIR
-    ========================== */
-    const applyBtns = document.querySelectorAll(".apply-btn");
-    applyBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            alert("Silakan kirim CV lengkap lu ke email: hrd@medangasswasta.com dengan subjek sesuai Kode Posisi.");
+    function getSubmissions() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        } catch {
+            return [];
+        }
+    }
+
+    function setSubmissions(rows) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+    }
+
+    function renderTable() {
+        const wrap = document.getElementById("applyTableWrap");
+        if (!wrap) return;
+
+        const rows = getSubmissions();
+        if (!rows.length) {
+            wrap.innerHTML = "<div style='color:#6b7280;font-size:13px;text-align:center;padding:15px;background:#fff;'>Belum ada data lamaran.</div>";
+            return;
+        }
+
+        wrap.innerHTML = `
+            <table style="width:100%;border-collapse:collapse;min-width:400px;font-size:13px;background:#fff;text-align:left;">
+                <thead style="background:#f3f4f6;">
+                    <tr>
+                        <th style="padding:10px;border-bottom:2px solid #e5e7eb;">Waktu</th>
+                        <th style="padding:10px;border-bottom:2px solid #e5e7eb;">Nama</th>
+                        <th style="padding:10px;border-bottom:2px solid #e5e7eb;">Posisi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.map(r => `
+                        <tr>
+                            <td style="padding:10px;border-bottom:1px solid #f3f4f6;">${escapeHtml(r.timestamp)}</td>
+                            <td style="padding:10px;border-bottom:1px solid #f3f4f6;">${escapeHtml(r.fullName)}</td>
+                            <td style="padding:10px;border-bottom:1px solid #f3f4f6;">${escapeHtml(r.positionName)}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
+    }
+
+    function ensureModal() {
+        if (modalEl && overlayEl) return;
+        const temp = document.createElement("div");
+        temp.innerHTML = modalHtml;
+        
+        document.body.appendChild(temp.children[0]); // Overlay
+        document.body.appendChild(temp.children[0]); // Modal
+        
+        overlayEl = document.getElementById("applyModalOverlay");
+        modalEl = document.getElementById("applyModal");
+
+        overlayEl.addEventListener("click", closeModal);
+        document.getElementById("applyModalClose").addEventListener("click", closeModal);
+        
+        document.getElementById("applyClearBtn").addEventListener("click", () => {
+            if(confirm("Yakin hapus data tabel lamaran?")) {
+                setSubmissions([]);
+                renderTable();
+            }
         });
-    });
 
-    /* =========================
-       FAQ ACCORDION LOGIC
-    ========================== */
-    const faqItems = document.querySelectorAll('.faq-item');
+        document.getElementById("applyForm").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const rows = getSubmissions();
 
-    faqItems.forEach(item => {
-        const question = item.querySelector('.faq-question');
-        question.addEventListener('click', () => {
-            
-            faqItems.forEach(otherItem => {
-                if(otherItem !== item) {
-                    otherItem.classList.remove('active');
-                }
+            rows.push({
+                timestamp: new Date().toLocaleString('id-ID'),
+                fullName: document.getElementById("applyFullName").value.trim(),
+                email: document.getElementById("applyEmail").value.trim(),
+                positionName: document.getElementById("applyPositionName").value.trim(),
+                positionCode: document.getElementById("applyPositionCode").value.trim()
             });
-            
-            item.classList.toggle('active');
+
+            setSubmissions(rows);
+            renderTable();
+            alert("Mantap! Lamaran lu berhasil disimpen ke tabel.");
+            document.getElementById("applyForm").reset();
         });
+
+        renderTable();
+    }
+
+    function openModalFor(btn) {
+        ensureModal();
+
+        const box = btn.closest(".box");
+        const h3 = box ? box.querySelector("h3") : null;
+        const text = h3 ? h3.textContent.trim() : "";
+
+        let positionCode = "";
+        let positionName = text;
+        
+        // Logic JS nangkap kode di dalam kurung (Kode: TIG-01)
+        const m = text.match(/\(\s*Kode\s*:\s*([^\)]+)\s*\)/i);
+        if (m && m[1]) {
+            positionCode = m[1].trim();
+            positionName = text.replace(m[0], "").trim();
+        }
+
+        document.getElementById("applyPositionCode").value = positionCode;
+        document.getElementById("applyPositionName").value = positionName;
+        document.getElementById("applyPositionLabel").textContent = positionCode ? `Kode Pekerjaan: ${positionCode}` : "";
+
+        modalEl.style.display = "block";
+        overlayEl.style.display = "block";
+    }
+
+    function closeModal() {
+        if (modalEl) modalEl.style.display = "none";
+        if (overlayEl) overlayEl.style.display = "none";
+    }
+
+    applyBtns.forEach((btn) => {
+        btn.addEventListener("click", () => openModalFor(btn));
     });
+});
